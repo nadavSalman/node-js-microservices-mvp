@@ -1,10 +1,8 @@
 version: "3.9"
-networks:
-  mongodb_network:
-    #external: true
+
 
 services:
-  mongodb:
+  mongo:
     image: mongo:latest
     container_name: mongodb
     environment:
@@ -17,9 +15,6 @@ services:
     ports:
       - 27017:27017
     restart: unless-stopped
-    networks:
-      - mongodb_network
-      
 
   mongo-express:
     image: mongo-express
@@ -34,19 +29,30 @@ services:
     volumes:
       - mongodb-data
     depends_on:
-      - mongodb
-    networks:
-      - mongodb_network
+      - mongo
     ports:
       - 8081:8081
     restart: unless-stopped
-    healthcheck:
-      test: wget --quiet --tries=3 --spider http://admin:admin123@10.10.10.60:8081 || exit 1
-      interval: 30s
-      timeout: 10s
-      retries: 3
+    links:
+      - mongo
 
+  health-service:
+    image: health-service
+    build:
+      context: health-service/ # path specified under context 
+      dockerfile: ./Dockerfile
+    environment:
+      NODE_ENV: production
+    ports:
+      - 3000:3000
+    volumes:
+      - ${PWD}/health-service/:/usr/src/app
+    links:
+      - mongo
       
+
+    
+
 
 
 
